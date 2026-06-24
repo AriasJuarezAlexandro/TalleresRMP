@@ -1,0 +1,138 @@
+@model TalleresRMP.Models.MantenimientoViewModel
+
+@* Encabezado tipo proforma *@
+<div class="proforma-box p-3 mb-4">
+    <div class="row align-items-center">
+        <div class="col-3 text-center">
+            <img src="~/images/logo.png" alt="Talleres RMP" style="max-height:90px;max-width:100%;"
+                 onerror="this.style.display='none'" />
+        </div>
+        <div class="col-6 text-center">
+            <h4 class="text-rmp mb-1">TALLER MECANICA GENERAL</h4>
+            <div>RMP — Servicio Automotriz</div>
+            <div class="text-muted small">RUC: 10452787054</div>
+        </div>
+        <div class="col-3">
+            <div class="border border-success rounded p-2 text-center">
+                <div class="fw-bold text-rmp">PROFORMA</div>
+                <div class="input-group input-group-sm mt-1">
+                    <span class="input-group-text">N°</span>
+                    <input asp-for="Mantenimiento.Numero" class="form-control" placeholder="0001" />
+                </div>
+                <span asp-validation-for="Mantenimiento.Numero" class="text-danger small"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" asp-for="Mantenimiento.IdMantenimiento" />
+
+@* Datos de cabecera *@
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <label class="form-label">Cliente</label>
+        <input asp-for="Mantenimiento.Cliente" class="form-control" />
+        <span asp-validation-for="Mantenimiento.Cliente" class="text-danger small"></span>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Teléfono</label>
+        <input asp-for="Mantenimiento.Telefono" class="form-control" />
+        <span asp-validation-for="Mantenimiento.Telefono" class="text-danger small"></span>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Estado</label>
+        <select asp-for="Mantenimiento.Estado" class="form-select">
+            <option value="Pendiente">Pendiente</option>
+            <option value="En proceso">En proceso</option>
+            <option value="Terminado">Terminado</option>
+            <option value="Entregado">Entregado</option>
+        </select>
+        <span asp-validation-for="Mantenimiento.Estado" class="text-danger small"></span>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Marca</label>
+        <input asp-for="Mantenimiento.Marca" class="form-control" />
+        <span asp-validation-for="Mantenimiento.Marca" class="text-danger small"></span>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Modelo</label>
+        <input asp-for="Mantenimiento.Modelo" class="form-control" />
+        <span asp-validation-for="Mantenimiento.Modelo" class="text-danger small"></span>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Placa</label>
+        <input asp-for="Mantenimiento.Placa" class="form-control" />
+        <span asp-validation-for="Mantenimiento.Placa" class="text-danger small"></span>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">KM</label>
+        <input asp-for="Mantenimiento.KM" class="form-control" />
+        <span asp-validation-for="Mantenimiento.KM" class="text-danger small"></span>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Fecha</label>
+        <input asp-for="Mantenimiento.FechaCreacion" type="datetime-local" class="form-control"
+               value="@Model.Mantenimiento.FechaCreacion.ToString("yyyy-MM-ddTHH:mm")" />
+    </div>
+</div>
+
+@* Grilla de productos *@
+<div class="table-responsive">
+    <table class="table table-bordered align-middle" id="tablaProductos">
+        <thead class="thead-rmp">
+            <tr>
+                <th style="width:80px;">Item</th>
+                <th style="width:90px;">Cant.</th>
+                <th>Descripción</th>
+                <th style="width:130px;">P. Unit</th>
+                <th style="width:130px;">Importe</th>
+                <th style="width:50px;"></th>
+            </tr>
+        </thead>
+        <tbody id="cuerpoProductos">
+            @for (var i = 0; i < Model.Productos.Count; i++)
+            {
+                var p = Model.Productos[i];
+                <tr class="fila-producto">
+                    <input type="hidden" name="Productos.Index" value="@i" />
+                    <td><input name="Productos[@i].Item" value="@p.Item" class="form-control form-control-sm js-item text-center" maxlength="2" readonly /></td>
+                    <td><input name="Productos[@i].Cantidad" value="@p.Cantidad" type="number" min="1" class="form-control form-control-sm js-cant" /></td>
+                    <td><input name="Productos[@i].Descripcion" value="@p.Descripcion" class="form-control form-control-sm" maxlength="100" /></td>
+                    <td><input name="Productos[@i].PrecioUnitario" value="@p.PrecioUnitario.ToString(System.Globalization.CultureInfo.InvariantCulture)" type="number" step="0.01" min="0" class="form-control form-control-sm js-precio" /></td>
+                    <td><input name="Productos[@i].Importe" value="@p.Importe.ToString(System.Globalization.CultureInfo.InvariantCulture)" type="number" step="0.01" class="form-control form-control-sm js-importe" readonly /></td>
+                    <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger js-quitar">✕</button></td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="4" class="text-end fw-bold text-rmp">TOTAL</td>
+                <td><input id="totalGeneral" class="form-control form-control-sm fw-bold" value="@Model.Mantenimiento.Total.ToString("N2")" readonly /></td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<div class="mb-4">
+    <button type="button" class="btn btn-outline-success" id="btnAgregarFila">+ Agregar fila</button>
+</div>
+
+<div class="d-flex gap-2">
+    <button type="submit" class="btn btn-rmp">Grabar</button>
+    <a class="btn btn-secondary" asp-action="Index">Cancelar</a>
+</div>
+
+@* Plantilla para filas nuevas *@
+<template id="plantillaFila">
+    <tr class="fila-producto">
+        <input type="hidden" name="Productos.Index" value="__KEY__" />
+        <td><input name="Productos[__KEY__].Item" class="form-control form-control-sm js-item text-center" maxlength="2" readonly /></td>
+        <td><input name="Productos[__KEY__].Cantidad" value="1" type="number" min="1" class="form-control form-control-sm js-cant" /></td>
+        <td><input name="Productos[__KEY__].Descripcion" class="form-control form-control-sm" maxlength="100" /></td>
+        <td><input name="Productos[__KEY__].PrecioUnitario" value="0" type="number" step="0.01" min="0" class="form-control form-control-sm js-precio" /></td>
+        <td><input name="Productos[__KEY__].Importe" value="0" type="number" step="0.01" class="form-control form-control-sm js-importe" readonly /></td>
+        <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger js-quitar">✕</button></td>
+    </tr>
+</template>
+

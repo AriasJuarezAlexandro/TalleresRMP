@@ -1,0 +1,18 @@
+@model TalleresRMP.Models.MantenimientoViewModel
+@{
+    ViewData["Title"] = "Editar Mantenimiento";
+}
+
+<h1 class="text-rmp mb-4">Editar Mantenimiento</h1>
+
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+<form asp-action="Edit" asp-route-id="@Model.Mantenimiento.IdMantenimiento" method="post">
+    @Html.AntiForgeryToken()
+    <partial name="_ProformaForm" model="Model" />
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/proforma.js" asp-append-version="true"></script>
+}

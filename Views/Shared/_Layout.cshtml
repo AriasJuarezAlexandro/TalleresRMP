@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Talleres RMP</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/TalleresRMP.styles.css" asp-append-version="true" />
+    <style>
+        :root { --rmp-verde: #1a5c2a; --rmp-verde-claro: #2a7d3f; }
+        .navbar-rmp { background-color: var(--rmp-verde); }
+        .navbar-rmp .navbar-brand,
+        .navbar-rmp .nav-link { color: #fff !important; }
+        .navbar-rmp .nav-link:hover { color: #d7f0db !important; }
+        .navbar-rmp .navbar-brand img { height: 42px; margin-right: 10px; }
+        .btn-rmp { background-color: var(--rmp-verde); border-color: var(--rmp-verde); color: #fff; }
+        .btn-rmp:hover { background-color: var(--rmp-verde-claro); border-color: var(--rmp-verde-claro); color: #fff; }
+        .text-rmp { color: var(--rmp-verde) !important; }
+        .table thead.thead-rmp th { background-color: var(--rmp-verde); color: #fff; }
+        .footer-rmp { background-color: #f3f6f3; }
+        .proforma-box { border: 2px solid var(--rmp-verde); border-radius: 4px; }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-rmp mb-4 shadow-sm">
+            <div class="container-fluid">
+                <a class="navbar-brand d-flex align-items-center" asp-controller="Home" asp-action="Index">
+                    <img src="~/images/logo.png" alt="Talleres RMP" onerror="this.style.display='none'" />
+                    <span>Talleres RMP</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-start">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">Inicio</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Mantenimiento" asp-action="Index">Mantenimientos</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container flex-grow-1">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer-rmp text-muted py-3 mt-4">
+        <div class="container text-center">
+            &copy; @DateTime.Now.Year — Talleres RMP · Taller de Mecánica General
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

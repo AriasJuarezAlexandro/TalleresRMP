@@ -1,0 +1,80 @@
+@model TalleresRMP.Models.Mantenimiento
+@{
+    ViewData["Title"] = $"Proforma N° {Model.Numero}";
+}
+
+<div class="d-flex justify-content-end gap-2 mb-3">
+    <a class="btn btn-rmp" asp-action="Edit" asp-route-id="@Model.IdMantenimiento">Editar</a>
+    <a class="btn btn-outline-danger" asp-action="Pdf" asp-route-id="@Model.IdMantenimiento" target="_blank">Descargar PDF</a>
+    <a class="btn btn-secondary" asp-action="Index">Volver a lista</a>
+</div>
+
+<div class="proforma-box p-4">
+    @* Encabezado *@
+    <div class="row align-items-center mb-4">
+        <div class="col-3 text-center">
+            <img src="~/images/logo.png" alt="Talleres RMP" style="max-height:90px;max-width:100%;"
+                 onerror="this.style.display='none'" />
+        </div>
+        <div class="col-6 text-center">
+            <h4 class="text-rmp mb-1">TALLER MECANICA GENERAL</h4>
+            <div>RMP — Servicio Automotriz</div>
+            <div class="text-muted small">RUC: 10452787054</div>
+        </div>
+        <div class="col-3">
+            <div class="border border-success rounded p-2 text-center">
+                <div class="fw-bold text-rmp">PROFORMA</div>
+                <div class="fs-5 fw-bold">N° @Model.Numero</div>
+                <div class="small">@Model.FechaCreacion.ToString("dd/MM/yyyy")</div>
+            </div>
+        </div>
+    </div>
+
+    @* Datos *@
+    <div class="row mb-4">
+        <div class="col-md-6"><strong>Cliente:</strong> @Model.Cliente</div>
+        <div class="col-md-6"><strong>Teléfono:</strong> @Model.Telefono</div>
+        <div class="col-md-6"><strong>Marca / Modelo:</strong> @Model.Marca @Model.Modelo</div>
+        <div class="col-md-6"><strong>Placa:</strong> @Model.Placa</div>
+        <div class="col-md-6"><strong>KM:</strong> @Model.KM</div>
+        <div class="col-md-6"><strong>Estado:</strong> <span class="badge bg-secondary">@Model.Estado</span></div>
+        <div class="col-md-6"><strong>Fecha:</strong> @Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</div>
+    </div>
+
+    @* Tabla de productos *@
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+            <thead class="thead-rmp">
+                <tr>
+                    <th style="width:80px;">Item</th>
+                    <th style="width:90px;">Cant.</th>
+                    <th>Descripción</th>
+                    <th style="width:130px;" class="text-end">P. Unit</th>
+                    <th style="width:130px;" class="text-end">Importe</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Productos.Count == 0)
+                {
+                    <tr><td colspan="5" class="text-center text-muted">Sin productos.</td></tr>
+                }
+                @foreach (var p in Model.Productos)
+                {
+                    <tr>
+                        <td>@p.Item</td>
+                        <td>@p.Cantidad</td>
+                        <td>@p.Descripcion</td>
+                        <td class="text-end">@p.PrecioUnitario.ToString("N2")</td>
+                        <td class="text-end">@p.Importe.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="4" class="text-end fw-bold text-rmp">TOTAL</td>
+                    <td class="text-end fw-bold fs-5">S/ @Model.Total.ToString("N2")</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
