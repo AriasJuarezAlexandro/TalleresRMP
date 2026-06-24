@@ -1,5 +1,4 @@
 using QuestPDF.Infrastructure;
-using TalleresRMP.Data;
 using TalleresRMP.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,10 +10,9 @@ QuestPDF.Settings.License = LicenseType.Community;
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddMemoryCache();
-builder.Services.AddSingleton<TursoConnection>();
-builder.Services.AddScoped<MantenimientoRepository>();
+builder.Services.AddSingleton<TursoService>();
+builder.Services.AddSingleton<ProformaPdfService>();
 builder.Services.AddScoped<MantenimientoCacheService>();
-builder.Services.AddScoped<ProformaPdfService>();
 
 var app = builder.Build();
 
