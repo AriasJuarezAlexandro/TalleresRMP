@@ -40,16 +40,6 @@
         <span asp-validation-for="Mantenimiento.Telefono" class="text-danger small"></span>
     </div>
     <div class="col-md-3">
-        <label class="form-label">Estado</label>
-        <select asp-for="Mantenimiento.Estado" class="form-select">
-            <option value="Pendiente">Pendiente</option>
-            <option value="En proceso">En proceso</option>
-            <option value="Terminado">Terminado</option>
-            <option value="Entregado">Entregado</option>
-        </select>
-        <span asp-validation-for="Mantenimiento.Estado" class="text-danger small"></span>
-    </div>
-    <div class="col-md-3">
         <label class="form-label">Marca</label>
         <input asp-for="Mantenimiento.Marca" class="form-control" />
         <span asp-validation-for="Mantenimiento.Marca" class="text-danger small"></span>
@@ -69,10 +59,10 @@
         <input asp-for="Mantenimiento.KM" class="form-control" />
         <span asp-validation-for="Mantenimiento.KM" class="text-danger small"></span>
     </div>
-    <div class="col-md-3">
-        <label class="form-label">Fecha</label>
-        <input asp-for="Mantenimiento.FechaCreacion" type="datetime-local" class="form-control"
-               value="@Model.Mantenimiento.FechaCreacion.ToString("yyyy-MM-ddTHH:mm")" />
+    <div class="col-12">
+        <label class="form-label">Fotos (URL de Drive)</label>
+        <input asp-for="Mantenimiento.Fotos" class="form-control" placeholder="https://drive.google.com/... (opcional)" maxlength="200" />
+        <span asp-validation-for="Mantenimiento.Fotos" class="text-danger small"></span>
     </div>
 </div>
 
@@ -95,6 +85,7 @@
                 var p = Model.Productos[i];
                 <tr class="fila-producto">
                     <input type="hidden" name="Productos.Index" value="@i" />
+                    <input type="hidden" name="Productos[@i].EsServicio" value="@p.EsServicio" />
                     <td><input name="Productos[@i].Item" value="@p.Item" class="form-control form-control-sm js-item text-center" maxlength="2" readonly /></td>
                     <td><input name="Productos[@i].Cantidad" value="@p.Cantidad" type="number" min="1" class="form-control form-control-sm js-cant" /></td>
                     <td><input name="Productos[@i].Descripcion" value="@p.Descripcion" class="form-control form-control-sm" maxlength="100" /></td>
@@ -118,6 +109,23 @@
     <button type="button" class="btn btn-outline-success" id="btnAgregarFila">+ Agregar fila</button>
 </div>
 
+@* Descripción general del mantenimiento *@
+<div class="row g-3 mb-4">
+    <div class="col-md-9">
+        <label class="form-label">Descripción del servicio</label>
+        <textarea asp-for="Mantenimiento.Descripcion" class="form-control" rows="5"
+                  maxlength="4000" placeholder="Detalle del trabajo realizado (opcional). Se agregará automáticamente como último ítem al guardar."></textarea>
+        <span asp-validation-for="Mantenimiento.Descripcion" class="text-danger small"></span>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Precio</label>
+        <input asp-for="Mantenimiento.Precio" type="number" step="0.01" min="0"
+               class="form-control" placeholder="(opcional)" />
+        <span asp-validation-for="Mantenimiento.Precio" class="text-danger small"></span>
+        <div class="form-text">Precio del ítem generado desde la descripción.</div>
+    </div>
+</div>
+
 <div class="d-flex gap-2">
     <button type="submit" class="btn btn-rmp">Grabar</button>
     <a class="btn btn-secondary" asp-action="Index">Cancelar</a>
@@ -127,6 +135,7 @@
 <template id="plantillaFila">
     <tr class="fila-producto">
         <input type="hidden" name="Productos.Index" value="__KEY__" />
+        <input type="hidden" name="Productos[__KEY__].EsServicio" value="0" />
         <td><input name="Productos[__KEY__].Item" class="form-control form-control-sm js-item text-center" maxlength="2" readonly /></td>
         <td><input name="Productos[__KEY__].Cantidad" value="1" type="number" min="1" class="form-control form-control-sm js-cant" /></td>
         <td><input name="Productos[__KEY__].Descripcion" class="form-control form-control-sm" maxlength="100" /></td>
@@ -135,4 +144,3 @@
         <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger js-quitar">✕</button></td>
     </tr>
 </template>
-

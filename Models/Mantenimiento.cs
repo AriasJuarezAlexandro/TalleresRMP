@@ -34,13 +34,17 @@ public class Mantenimiento
     [MaxLength(11)]
     public string KM { get; set; } = string.Empty;
 
-    [Range(0, 999.99)]
     public decimal Total { get; set; }
 
-    [MaxLength(20)]
-    public string Estado { get; set; } = "Pendiente";
-
     public DateTime FechaCreacion { get; set; } = DateTime.Now;
+
+    [MaxLength(200)]
+    public string? Fotos { get; set; }
+
+    [MaxLength(4000)]
+    public string? Descripcion { get; set; }
+
+    public decimal? Precio { get; set; }
 
     public List<MantenimientoProducto> Productos { get; set; } = new();
 }

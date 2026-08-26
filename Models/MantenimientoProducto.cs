@@ -17,12 +17,13 @@ public class MantenimientoProducto
     public int Cantidad { get; set; } = 1;
 
     [Required(ErrorMessage = "La descripción es obligatoria.")]
-    [MaxLength(100)]
+    [MaxLength(4000)]
     public string Descripcion { get; set; } = string.Empty;
 
-    [Range(0, 999.99)]
     public decimal PrecioUnitario { get; set; }
 
-    [Range(0, 999.99)]
     public decimal Importe { get; set; }
+
+    // 1 = generado desde Mantenimiento.Descripcion, 0 = ingresado manualmente
+    public int EsServicio { get; set; }
 }

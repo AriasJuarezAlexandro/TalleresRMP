@@ -37,8 +37,14 @@
         <div class="col-md-6"><strong>Marca / Modelo:</strong> @Model.Marca @Model.Modelo</div>
         <div class="col-md-6"><strong>Placa:</strong> @Model.Placa</div>
         <div class="col-md-6"><strong>KM:</strong> @Model.KM</div>
-        <div class="col-md-6"><strong>Estado:</strong> <span class="badge bg-secondary">@Model.Estado</span></div>
         <div class="col-md-6"><strong>Fecha:</strong> @Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</div>
+        @if (!string.IsNullOrEmpty(Model.Fotos))
+        {
+            <div class="col-md-12">
+                <strong>Fotos:</strong>
+                <a href="@Model.Fotos" target="_blank" rel="noopener noreferrer">Ver fotos en Drive</a>
+            </div>
+        }
     </div>
 
     @* Tabla de productos *@
