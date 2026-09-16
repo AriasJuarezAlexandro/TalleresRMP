@@ -1,0 +1,24 @@
+@{
+    ViewData["Title"] = "Importar Excel";
+}
+
+<h1 class="text-rmp mb-4">Importar Mantenimientos desde Excel</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <p class="text-muted">
+            Sube el Excel con la hoja "HIST. ACTIVIDADES" (historial de actividades ejecutadas).
+            Los registros cuya cotización ya exista no se vuelven a importar.
+        </p>
+
+        <form asp-action="Importar" method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <input type="file" name="archivo" class="form-control" accept=".xlsx" required />
+            </div>
+            <button type="submit" class="btn btn-rmp">Importar</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>

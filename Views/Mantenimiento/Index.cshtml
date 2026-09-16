@@ -13,7 +13,11 @@
     <h1 class="text-rmp mb-0">Lista de Mantenimientos</h1>
     @if (Context.Session.GetString(SesionClaves.Nivel) == "A")
     {
-        <a class="btn btn-rmp" asp-action="Create">+ Nuevo Mantenimiento</a>
+        <div>
+            <a class="btn btn-outline-secondary" asp-action="Importar">Importar Excel</a>
+            <a class="btn btn-outline-secondary" asp-action="ExportarCompleto" asp-route-placa="@placa" asp-route-desde="@desde" asp-route-hasta="@hasta">Exportar Completo</a>
+            <a class="btn btn-rmp" asp-action="Create">+ Nuevo Mantenimiento</a>
+        </div>
     }
 </div>
 

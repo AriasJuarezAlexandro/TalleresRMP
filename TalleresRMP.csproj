@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.104.2" />
     <PackageReference Include="Nelknet.LibSQL.Data" Version="0.2.8" />
     <PackageReference Include="QuestPDF" Version="2026.6.0" />
   </ItemGroup>

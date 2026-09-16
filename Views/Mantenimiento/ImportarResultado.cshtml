@@ -1,0 +1,23 @@
+@{
+    ViewData["Title"] = "Resultado de la importación";
+}
+
+<h1 class="text-rmp mb-4">Resultado de la importación</h1>
+
+<ul class="list-group mb-4" style="max-width:420px;">
+    <li class="list-group-item d-flex justify-content-between">
+        <span>Importados</span>
+        <strong class="text-success">@ViewBag.Importados</strong>
+    </li>
+    <li class="list-group-item d-flex justify-content-between">
+        <span>Omitidos por número duplicado</span>
+        <strong>@ViewBag.OmitidosDuplicados</strong>
+    </li>
+    <li class="list-group-item d-flex justify-content-between">
+        <span>Omitidos por no tener número de cotización</span>
+        <strong>@ViewBag.OmitidosSinNumero</strong>
+    </li>
+</ul>
+
+<a asp-action="Index" class="btn btn-rmp">Ver Mantenimientos</a>
+<a asp-action="Importar" class="btn btn-outline-secondary">Importar otro archivo</a>

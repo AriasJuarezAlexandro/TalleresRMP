@@ -16,17 +16,23 @@ public class MantenimientoController : Controller
     private readonly MantenimientoCacheService _cacheService;
     private readonly ProformaPdfService _pdfService;
     private readonly IConfiguration _configuration;
+    private readonly ExcelImportService _importService;
+    private readonly ExcelExportService _exportService;
 
     public MantenimientoController(
         TursoService turso,
         MantenimientoCacheService cacheService,
         ProformaPdfService pdfService,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ExcelImportService importService,
+        ExcelExportService exportService)
     {
         _turso = turso;
         _cacheService = cacheService;
         _pdfService = pdfService;
         _configuration = configuration;
+        _importService = importService;
+        _exportService = exportService;
     }
 
     // GET /Mantenimiento
@@ -44,15 +50,7 @@ public class MantenimientoController : Controller
         desde = string.IsNullOrWhiteSpace(desde) ? DateTime.Now.AddDays(-3).ToString("yyyy-MM-dd") : desde;
         hasta = string.IsNullOrWhiteSpace(hasta) ? DateTime.Now.ToString("yyyy-MM-dd") : hasta;
 
-        var condiciones = new List<string>();
-        if (!string.IsNullOrWhiteSpace(placa))
-            condiciones.Add("Placa LIKE @Placa");
-        if (!string.IsNullOrWhiteSpace(desde))
-            condiciones.Add("FechaCreacion >= @Desde");
-        if (!string.IsNullOrWhiteSpace(hasta))
-            condiciones.Add("FechaCreacion <= @Hasta");
-
-        var where = condiciones.Count > 0 ? "WHERE " + string.Join(" AND ", condiciones) : "";
+        var where = ConstruirWhere(placa, desde, hasta);
 
         using var conn = _turso.GetConnection();
         await conn.OpenAsync();
@@ -88,6 +86,52 @@ public class MantenimientoController : Controller
         ViewBag.Total = total;
 
         return View(lista);
+    }
+
+    private static string ConstruirWhere(string? placa, string? desde, string? hasta)
+    {
+        var condiciones = new List<string>();
+        if (!string.IsNullOrWhiteSpace(placa))
+            condiciones.Add("Placa LIKE @Placa");
+        if (!string.IsNullOrWhiteSpace(desde))
+            condiciones.Add("FechaCreacion >= @Desde");
+        if (!string.IsNullOrWhiteSpace(hasta))
+            condiciones.Add("FechaCreacion <= @Hasta");
+
+        return condiciones.Count > 0 ? "WHERE " + string.Join(" AND ", condiciones) : "";
+    }
+
+    // GET /Mantenimiento/ExportarCompleto -- todas las columnas de Mantenimiento (respaldo), sin MantenimientoProducto
+    [RequiereNivel("A")]
+    public async Task<IActionResult> ExportarCompleto(string? placa, string? desde, string? hasta)
+    {
+        var lista = await ObtenerListaParaExportarAsync(placa, desde, hasta);
+        var bytes = _exportService.ExportarCompleto(lista);
+        return File(
+            bytes,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            $"Mantenimientos_Completo_{DateTime.Now:yyyyMMdd_HHmm}.xlsx");
+    }
+
+    private async Task<List<Mantenimiento>> ObtenerListaParaExportarAsync(string? placa, string? desde, string? hasta)
+    {
+        var where = ConstruirWhere(placa, desde, hasta);
+
+        using var conn = _turso.GetConnection();
+        await conn.OpenAsync();
+
+        var lista = new List<Mantenimiento>();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText =
+            $"SELECT IdMantenimiento, Numero, Cliente, Telefono, Marca, Modelo, Placa, KM, Total, FechaCreacion, Fotos, Descripcion, Precio " +
+            $"FROM Mantenimiento {where} ORDER BY FechaCreacion DESC";
+        AgregarParametrosFiltro(cmd, placa, desde, hasta);
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+            lista.Add(LeerCabecerCompleta(reader));
+
+        return lista;
     }
 
     private static void AgregarParametrosFiltro(LibSQLCommand cmd, string? placa, string? desde, string? hasta)
@@ -257,6 +301,101 @@ public class MantenimientoController : Controller
 
         _cacheService.Invalidate();
         return RedirectToAction(nameof(Index));
+    }
+
+    // GET /Mantenimiento/Importar
+    [RequiereNivel("A")]
+    public IActionResult Importar() => View();
+
+    // POST /Mantenimiento/Importar
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequiereNivel("A")]
+    public async Task<IActionResult> Importar(IFormFile archivo)
+    {
+        if (archivo is null || archivo.Length == 0)
+        {
+            ModelState.AddModelError(string.Empty, "Selecciona un archivo Excel (.xlsx).");
+            return View();
+        }
+
+        List<FilaImportada> filas;
+        using (var stream = archivo.OpenReadStream())
+            filas = _importService.ParseHistorialActividades(stream);
+
+        using var conn = _turso.GetConnection();
+        await conn.OpenAsync();
+
+        var numerosExistentes = new HashSet<string>();
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT Numero FROM Mantenimiento";
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+                numerosExistentes.Add(reader.GetString(0));
+        }
+
+        int importados = 0, omitidosDuplicados = 0, omitidosSinNumero = 0;
+
+        foreach (var fila in filas)
+        {
+            if (string.IsNullOrWhiteSpace(fila.Numero))
+            {
+                omitidosSinNumero++;
+                continue;
+            }
+
+            if (numerosExistentes.Contains(fila.Numero))
+            {
+                omitidosDuplicados++;
+                continue;
+            }
+
+            var m = new Mantenimiento
+            {
+                Numero = fila.Numero,
+                Cliente = string.Empty,
+                Telefono = string.Empty,
+                Marca = fila.Marca,
+                Modelo = fila.Modelo,
+                Placa = fila.Placa,
+                KM = fila.KM,
+                FechaCreacion = fila.Fecha,
+                Descripcion = fila.Descripcion,
+                Productos = new List<MantenimientoProducto>()
+            };
+
+            AgregarProductoServicio(m);
+            RenumerarItems(m.Productos);
+            RecalcularTotales(m);
+
+            int id;
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText =
+                    "INSERT INTO Mantenimiento (Numero, Cliente, Telefono, Marca, Modelo, Placa, KM, Total, FechaCreacion, Fotos, Descripcion, Precio) " +
+                    "VALUES (@Numero, @Cliente, @Telefono, @Marca, @Modelo, @Placa, @KM, @Total, @FechaCreacion, @Fotos, @Descripcion, @Precio)";
+                AgregarParametrosCabecera(cmd, m);
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "SELECT last_insert_rowid()";
+                id = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+            }
+
+            await InsertarProductosAsync(conn, id, m.Productos);
+            numerosExistentes.Add(fila.Numero);
+            importados++;
+        }
+
+        _cacheService.Invalidate();
+
+        ViewBag.Importados = importados;
+        ViewBag.OmitidosDuplicados = omitidosDuplicados;
+        ViewBag.OmitidosSinNumero = omitidosSinNumero;
+        return View("ImportarResultado");
     }
 
     // GET /Mantenimiento/Pdf/{id}

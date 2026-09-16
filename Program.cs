@@ -14,6 +14,8 @@ builder.Services.AddSingleton<TursoService>();
 builder.Services.AddSingleton<ProformaPdfService>();
 builder.Services.AddScoped<MantenimientoCacheService>();
 builder.Services.AddScoped<UsuarioService>();
+builder.Services.AddScoped<ExcelImportService>();
+builder.Services.AddScoped<ExcelExportService>();
 
 // Sesión simple para el login (sin librerías de auth externas).
 builder.Services.AddDistributedMemoryCache();

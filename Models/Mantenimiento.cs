@@ -27,7 +27,7 @@ public class Mantenimiento
     public string Modelo { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "La placa es obligatoria.")]
-    [MaxLength(10)]
+    [MaxLength(20)]
     public string Placa { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "El KM es obligatorio.")]
