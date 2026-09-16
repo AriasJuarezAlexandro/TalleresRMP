@@ -1,11 +1,13 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Nelknet.LibSQL.Data;
+using TalleresRMP.Filters;
 using TalleresRMP.Models;
 using TalleresRMP.Services;
 
 namespace TalleresRMP.Controllers;
 
+[RequiereSesion]
 public class MantenimientoController : Controller
 {
     private const string FechaFormato = "yyyy-MM-dd HH:mm:ss";
@@ -99,6 +101,7 @@ public class MantenimientoController : Controller
     }
 
     // GET /Mantenimiento/Create
+    [RequiereNivel("A")]
     public async Task<IActionResult> Create()
     {
         var vm = new MantenimientoViewModel
@@ -115,6 +118,7 @@ public class MantenimientoController : Controller
     // POST /Mantenimiento/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequiereNivel("A")]
     public async Task<IActionResult> Create(MantenimientoViewModel vm)
     {
         if (!ModelState.IsValid)
@@ -153,6 +157,7 @@ public class MantenimientoController : Controller
     }
 
     // GET /Mantenimiento/Edit/{id}
+    [RequiereNivel("A")]
     public async Task<IActionResult> Edit(int id)
     {
         var m = await ObtenerPorIdAsync(id);
@@ -170,6 +175,7 @@ public class MantenimientoController : Controller
     // POST /Mantenimiento/Edit/{id}
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequiereNivel("A")]
     public async Task<IActionResult> Edit(MantenimientoViewModel vm)
     {
         if (!ModelState.IsValid)
@@ -216,6 +222,7 @@ public class MantenimientoController : Controller
     }
 
     // GET /Mantenimiento/Details/{id}
+    [RequiereNivel("A")]
     public async Task<IActionResult> Details(int id)
     {
         var m = await ObtenerPorIdAsync(id);
@@ -228,6 +235,7 @@ public class MantenimientoController : Controller
     // POST /Mantenimiento/Delete/{id}
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequiereNivel("A")]
     public async Task<IActionResult> Delete(int id)
     {
         using var conn = _turso.GetConnection();
@@ -252,6 +260,7 @@ public class MantenimientoController : Controller
     }
 
     // GET /Mantenimiento/Pdf/{id}
+    [RequiereNivel("A")]
     public async Task<IActionResult> Pdf(int id)
     {
         var m = await ObtenerPorIdAsync(id);

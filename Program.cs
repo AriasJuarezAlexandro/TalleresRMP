@@ -13,6 +13,16 @@ builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<TursoService>();
 builder.Services.AddSingleton<ProformaPdfService>();
 builder.Services.AddScoped<MantenimientoCacheService>();
+builder.Services.AddScoped<UsuarioService>();
+
+// Sesión simple para el login (sin librerías de auth externas).
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(8);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 var app = builder.Build();
 
@@ -26,6 +36,8 @@ if (!app.Environment.IsDevelopment())
 
 //app.UseHttpsRedirection();
 app.UseRouting();
+
+app.UseSession();
 
 app.UseAuthorization();
 

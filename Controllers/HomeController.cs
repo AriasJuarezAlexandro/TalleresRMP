@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+using TalleresRMP.Filters;
 using TalleresRMP.Models;
 using TalleresRMP.Services;
 
@@ -15,6 +16,7 @@ namespace TalleresRMP.Controllers
         }
 
         // GET /
+        [RequiereSesion]
         public async Task<IActionResult> Index()
         {
             var mantenimientos = await _cacheService.GetCachedAsync();

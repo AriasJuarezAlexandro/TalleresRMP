@@ -1,0 +1,44 @@
+@model IEnumerable<TalleresRMP.Models.Usuario>
+@{
+    ViewData["Title"] = "Usuarios";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="text-rmp mb-0">Usuarios</h1>
+    <a class="btn btn-rmp" asp-action="Create">+ Nuevo Usuario</a>
+</div>
+
+<table class="table table-striped align-middle">
+    <thead class="thead-rmp">
+        <tr>
+            <th>Login</th>
+            <th>Nivel</th>
+            <th>Activo</th>
+            <th>Fecha Creación</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var u in Model)
+        {
+            <tr>
+                <td>@u.Login</td>
+                <td>@u.Nivel</td>
+                <td>
+                    @if (u.Activo)
+                    {
+                        <span class="badge bg-success">Sí</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">No</span>
+                    }
+                </td>
+                <td>@u.FechaCreacion.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>
+                    <a class="btn btn-outline-secondary btn-sm" asp-action="Edit" asp-route-id="@u.IdUsuario">Editar</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
