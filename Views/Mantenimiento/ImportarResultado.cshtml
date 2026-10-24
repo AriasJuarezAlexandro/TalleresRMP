@@ -17,7 +17,29 @@
         <span>Omitidos por no tener número de cotización</span>
         <strong>@ViewBag.OmitidosSinNumero</strong>
     </li>
+    <li class="list-group-item d-flex justify-content-between">
+        <span>Productos importados</span>
+        <strong class="text-success">@ViewBag.ProductosImportados</strong>
+    </li>
+    <li class="list-group-item d-flex justify-content-between">
+        <span>Productos omitidos (fila inválida o sin su mantenimiento)</span>
+        <strong>@ViewBag.ProductosOmitidos</strong>
+    </li>
 </ul>
+
+@{ var noReconocidos = ViewBag.NoReconocidos as List<string> ?? new List<string>(); }
+@if (noReconocidos.Count > 0)
+{
+    <div class="alert alert-warning" style="max-width:420px;">
+        <strong>Archivos no importados</strong> (no son un Excel válido ni una proforma del sistema):
+        <ul class="mb-0">
+            @foreach (var nombre in noReconocidos)
+            {
+                <li>@nombre</li>
+            }
+        </ul>
+    </div>
+}
 
 <a asp-action="Index" class="btn btn-rmp">Ver Mantenimientos</a>
 <a asp-action="Importar" class="btn btn-outline-secondary">Importar otro archivo</a>

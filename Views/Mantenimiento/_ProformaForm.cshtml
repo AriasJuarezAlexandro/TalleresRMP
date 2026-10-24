@@ -17,7 +17,8 @@
                 <div class="fw-bold text-rmp">PROFORMA</div>
                 <div class="input-group input-group-sm mt-1">
                     <span class="input-group-text">N°</span>
-                    <input asp-for="Mantenimiento.Numero" class="form-control" placeholder="0001" />
+                    <input asp-for="Mantenimiento.Numero" class="form-control js-numero" placeholder="000001"
+                           maxlength="6" inputmode="numeric" autocomplete="off" />
                 </div>
                 <span asp-validation-for="Mantenimiento.Numero" class="text-danger small"></span>
             </div>
@@ -61,7 +62,12 @@
     </div>
     <div class="col-12">
         <label class="form-label">Fotos (URL de Drive)</label>
-        <input asp-for="Mantenimiento.Fotos" class="form-control" placeholder="https://drive.google.com/... (opcional)" maxlength="200" />
+        <div class="input-group">
+            <input asp-for="Mantenimiento.Fotos" class="form-control" placeholder="https://drive.google.com/... (opcional)" maxlength="200" />
+            <button type="button" class="btn btn-rmp" id="btnAbrirFotos" title="Abrir el enlace en una pestaña nueva">
+                📷 Ver fotos
+            </button>
+        </div>
         <span asp-validation-for="Mantenimiento.Fotos" class="text-danger small"></span>
     </div>
 </div>

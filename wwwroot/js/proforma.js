@@ -64,6 +64,25 @@
         tbody.querySelectorAll('.fila-producto').forEach(enlazarFila);
         renumerarItems();
         recalcularTotal();
+
+        enlazarBotonFotos();
+    }
+
+    // Botón "Ver fotos": abre en una pestaña nueva el enlace escrito en el campo Fotos.
+    function enlazarBotonFotos() {
+        const btn = document.getElementById('btnAbrirFotos');
+        const campo = document.getElementById('Mantenimiento_Fotos');
+        if (!btn || !campo) return;
+
+        btn.addEventListener('click', function () {
+            const url = (campo.value || '').trim();
+            if (!url) {
+                campo.focus();
+                return;
+            }
+            const destino = /^https?:\/\//i.test(url) ? url : 'https://' + url;
+            window.open(destino, '_blank', 'noopener,noreferrer');
+        });
     }
 
     if (document.readyState === 'loading') {
@@ -71,4 +90,18 @@
     } else {
         init();
     }
+})();
+
+// N° de proforma: solo dígitos (máx. 6) y, al salir del campo, ceros a la izquierda (914 -> 000914).
+// El servidor aplica la misma regla al grabar; esto solo adelanta lo que se va a guardar.
+(function () {
+    document.addEventListener('input', function (e) {
+        if (!e.target.classList.contains('js-numero')) return;
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6);
+    });
+
+    document.addEventListener('focusout', function (e) {
+        if (!e.target.classList.contains('js-numero') || e.target.value === '') return;
+        e.target.value = e.target.value.padStart(6, '0');
+    });
 })();

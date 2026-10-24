@@ -6,8 +6,9 @@ public class Mantenimiento
 {
     public int IdMantenimiento { get; set; }
 
+    // Hasta 6 dígitos; al grabar se completa con ceros a la izquierda (ej. 914 -> 000914).
     [Required(ErrorMessage = "El número es obligatorio.")]
-    [MaxLength(20)]
+    [RegularExpression(@"^\d{1,6}$", ErrorMessage = "El número debe tener solo dígitos (máximo 6).")]
     public string Numero { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "El cliente es obligatorio.")]

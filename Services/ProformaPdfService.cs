@@ -131,7 +131,8 @@ public class ProformaPdfService
 
                 foreach (var p in m.Productos)
                 {
-                    BodyCell(table, p.Item, TextAlignment.Center);
+                    // "(S)" marca el ítem de servicio para que la importación del PDF lo distinga.
+                    BodyCell(table, p.EsServicio == 1 ? $"{p.Item} (S)" : p.Item, TextAlignment.Center);
                     BodyCell(table, p.Cantidad.ToString(), TextAlignment.Center);
                     BodyCell(table, p.Descripcion, TextAlignment.Left);
                     BodyCell(table, p.PrecioUnitario.ToString("N2"), TextAlignment.Right);

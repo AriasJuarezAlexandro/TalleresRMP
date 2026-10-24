@@ -8,20 +8,9 @@ namespace TalleresRMP.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly MantenimientoCacheService _cacheService;
-
-        public HomeController(MantenimientoCacheService cacheService)
-        {
-            _cacheService = cacheService;
-        }
-
-        // GET /
+        // GET / -- la pantalla de inicio ahora es la lista de mantenimientos.
         [RequiereSesion]
-        public async Task<IActionResult> Index()
-        {
-            var mantenimientos = await _cacheService.GetCachedAsync();
-            return View(mantenimientos);
-        }
+        public IActionResult Index() => RedirectToAction("Index", "Mantenimiento");
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

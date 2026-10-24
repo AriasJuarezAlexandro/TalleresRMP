@@ -18,6 +18,7 @@ public class MantenimientoController : Controller
     private readonly IConfiguration _configuration;
     private readonly ExcelImportService _importService;
     private readonly ExcelExportService _exportService;
+    private readonly PdfImportService _pdfImportService;
 
     public MantenimientoController(
         TursoService turso,
@@ -25,7 +26,8 @@ public class MantenimientoController : Controller
         ProformaPdfService pdfService,
         IConfiguration configuration,
         ExcelImportService importService,
-        ExcelExportService exportService)
+        ExcelExportService exportService,
+        PdfImportService pdfImportService)
     {
         _turso = turso;
         _cacheService = cacheService;
@@ -33,6 +35,7 @@ public class MantenimientoController : Controller
         _configuration = configuration;
         _importService = importService;
         _exportService = exportService;
+        _pdfImportService = pdfImportService;
     }
 
     // GET /Mantenimiento
@@ -41,14 +44,12 @@ public class MantenimientoController : Controller
         const int porPagina = 10;
         pagina = Math.Max(1, pagina);
 
-        // Valores por defecto: últimos 3 días hasta hoy
+        // Valores por defecto: últimos 3 días hasta hoy (hora de Perú)
+        var hoy = FechaHelper.Ahora;
         if (string.IsNullOrWhiteSpace(desde))
-            desde = DateTime.Now.AddDays(-3).ToString("yyyy-MM-dd");
+            desde = hoy.AddDays(-3).ToString("yyyy-MM-dd");
         if (string.IsNullOrWhiteSpace(hasta))
-            hasta = DateTime.Now.ToString("yyyy-MM-dd");
-
-        desde = string.IsNullOrWhiteSpace(desde) ? DateTime.Now.AddDays(-3).ToString("yyyy-MM-dd") : desde;
-        hasta = string.IsNullOrWhiteSpace(hasta) ? DateTime.Now.ToString("yyyy-MM-dd") : hasta;
+            hasta = hoy.ToString("yyyy-MM-dd");
 
         var where = ConstruirWhere(placa, desde, hasta);
 
@@ -110,7 +111,7 @@ public class MantenimientoController : Controller
         return File(
             bytes,
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            $"Mantenimientos_Completo_{DateTime.Now:yyyyMMdd_HHmm}.xlsx");
+            $"Mantenimientos_Completo_{FechaHelper.Ahora:yyyyMMdd_HHmm}.xlsx");
     }
 
     private async Task<List<Mantenimiento>> ObtenerListaParaExportarAsync(string? placa, string? desde, string? hasta)
@@ -127,9 +128,32 @@ public class MantenimientoController : Controller
             $"FROM Mantenimiento {where} ORDER BY FechaCreacion DESC";
         AgregarParametrosFiltro(cmd, placa, desde, hasta);
 
-        using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-            lista.Add(LeerCabecerCompleta(reader));
+        using (var reader = await cmd.ExecuteReaderAsync())
+        {
+            while (await reader.ReadAsync())
+                lista.Add(LeerCabecerCompleta(reader));
+        }
+
+        // Productos manuales de esos mismos mantenimientos (hoja PRODUCTOS); el de servicio
+        // no se exporta porque ya viaja en Descripcion/Precio.
+        var porId = lista.ToDictionary(m => m.IdMantenimiento);
+        using var cmdProductos = conn.CreateCommand();
+        cmdProductos.CommandText =
+            "SELECT IdMantenimientoProducto, IdMantenimiento, Item, Cantidad, Descripcion, PrecioUnitario, Importe, EsServicio " +
+            "FROM MantenimientoProducto " +
+            $"WHERE EsServicio = 0 AND IdMantenimiento IN (SELECT IdMantenimiento FROM Mantenimiento {where}) " +
+            "ORDER BY IdMantenimiento, CAST(Item AS INTEGER)";
+        AgregarParametrosFiltro(cmdProductos, placa, desde, hasta);
+
+        using (var reader = await cmdProductos.ExecuteReaderAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                var producto = LeerProducto(reader);
+                if (porId.TryGetValue(producto.IdMantenimiento, out var m))
+                    m.Productos.Add(producto);
+            }
+        }
 
         return lista;
     }
@@ -169,7 +193,8 @@ public class MantenimientoController : Controller
             return View(vm);
 
         var m = vm.Mantenimiento;
-        m.FechaCreacion = DateTime.Now;
+        m.Numero = m.Numero.PadLeft(6, '0');   // el validador ya garantizó 1 a 6 dígitos
+        m.FechaCreacion = FechaHelper.Ahora;
         m.Productos = vm.Productos ?? new List<MantenimientoProducto>();
         AgregarProductoServicio(m);
         RenumerarItems(m.Productos);
@@ -226,6 +251,7 @@ public class MantenimientoController : Controller
             return View(vm);
 
         var m = vm.Mantenimiento;
+        m.Numero = m.Numero.PadLeft(6, '0');   // el validador ya garantizó 1 a 6 dígitos
 
         // Toma solo los productos manuales del grid; el de servicio siempre se regenera desde el textarea
         var manuales = (vm.Productos ?? new List<MantenimientoProducto>())
@@ -311,17 +337,48 @@ public class MantenimientoController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiereNivel("A")]
-    public async Task<IActionResult> Importar(IFormFile archivo)
+    public async Task<IActionResult> Importar(List<IFormFile> archivos)
     {
-        if (archivo is null || archivo.Length == 0)
+        archivos = archivos.Where(a => a.Length > 0).ToList();
+        if (archivos.Count == 0)
         {
-            ModelState.AddModelError(string.Empty, "Selecciona un archivo Excel (.xlsx).");
+            ModelState.AddModelError(string.Empty, "Selecciona uno o más archivos Excel (.xlsx) o PDF de proforma.");
             return View();
         }
 
-        List<FilaImportada> filas;
-        using (var stream = archivo.OpenReadStream())
-            filas = _importService.ParseHistorialActividades(stream);
+        // Junta las filas de todos los archivos; los que no se pueden leer se listan en el resultado.
+        var filas = new List<FilaImportada>();
+        var noReconocidos = new List<string>();
+        int productosOmitidos = 0;
+
+        foreach (var archivo in archivos)
+        {
+            var extension = Path.GetExtension(archivo.FileName).ToLowerInvariant();
+            try
+            {
+                using var stream = archivo.OpenReadStream();
+                if (extension == ".xlsx")
+                {
+                    var datos = _importService.ParseArchivo(stream);
+                    filas.AddRange(datos.Filas);
+                    productosOmitidos += datos.ProductosOmitidos;
+                }
+                else if (extension == ".pdf" && _pdfImportService.ParseProforma(stream, out var omitidosPdf) is { } fila)
+                {
+                    filas.Add(fila);
+                    productosOmitidos += omitidosPdf;
+                }
+                else
+                {
+                    noReconocidos.Add(archivo.FileName);
+                }
+            }
+            catch (Exception)
+            {
+                // Archivo dañado o con otro formato: no frena el resto de la importación.
+                noReconocidos.Add(archivo.FileName);
+            }
+        }
 
         using var conn = _turso.GetConnection();
         await conn.OpenAsync();
@@ -335,7 +392,7 @@ public class MantenimientoController : Controller
                 numerosExistentes.Add(reader.GetString(0));
         }
 
-        int importados = 0, omitidosDuplicados = 0, omitidosSinNumero = 0;
+        int importados = 0, omitidosDuplicados = 0, omitidosSinNumero = 0, productosImportados = 0;
 
         foreach (var fila in filas)
         {
@@ -354,16 +411,20 @@ public class MantenimientoController : Controller
             var m = new Mantenimiento
             {
                 Numero = fila.Numero,
-                Cliente = string.Empty,
-                Telefono = string.Empty,
+                Cliente = fila.Cliente,
+                Telefono = fila.Telefono,
                 Marca = fila.Marca,
                 Modelo = fila.Modelo,
                 Placa = fila.Placa,
                 KM = fila.KM,
                 FechaCreacion = fila.Fecha,
+                Fotos = fila.Fotos,
                 Descripcion = fila.Descripcion,
-                Productos = new List<MantenimientoProducto>()
+                Precio = fila.Precio,
+                // Productos manuales (hoja PRODUCTOS del Excel o tabla del PDF)
+                Productos = fila.Productos.ToList()
             };
+            productosImportados += m.Productos.Count;
 
             AgregarProductoServicio(m);
             RenumerarItems(m.Productos);
@@ -395,6 +456,9 @@ public class MantenimientoController : Controller
         ViewBag.Importados = importados;
         ViewBag.OmitidosDuplicados = omitidosDuplicados;
         ViewBag.OmitidosSinNumero = omitidosSinNumero;
+        ViewBag.ProductosImportados = productosImportados;
+        ViewBag.ProductosOmitidos = productosOmitidos;
+        ViewBag.NoReconocidos = noReconocidos;
         return View("ImportarResultado");
     }
 
@@ -460,7 +524,7 @@ public class MantenimientoController : Controller
         var maxActual = Convert.ToInt32(await cmd.ExecuteScalarAsync());
 
         int siguiente = Math.Max(maxActual, inicio - 1) + 1;
-        return siguiente.ToString("D4");
+        return siguiente.ToString("D6");
     }
 
     // Agrega al final el producto de servicio generado desde Mantenimiento.Descripcion (EsServicio=1)

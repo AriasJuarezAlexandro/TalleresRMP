@@ -26,7 +26,7 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-rmp mb-4 shadow-sm">
             <div class="container-fluid">
-                <a class="navbar-brand d-flex align-items-center" asp-controller="Home" asp-action="Index">
+                <a class="navbar-brand d-flex align-items-center" asp-controller="Mantenimiento" asp-action="Index">
                     <img src="~/images/logo.png" alt="Talleres RMP" onerror="this.style.display='none'" />
                     <span>Talleres RMP</span>
                 </a>
@@ -38,9 +38,6 @@
                     @if (Context.Session.GetInt32(SesionClaves.IdUsuario) is not null)
                     {
                         <ul class="navbar-nav flex-grow-1">
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Home" asp-action="Index">Inicio</a>
-                            </li>
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Mantenimiento" asp-action="Index">Mantenimientos</a>
                             </li>
